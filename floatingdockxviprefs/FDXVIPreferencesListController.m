@@ -245,9 +245,17 @@ UIView *blackViewRespring;
     
     AudioServicesPlaySystemSound(1519);
 
-    self.changelogController = [[OBWelcomeController alloc] initWithTitle:@"FloatingDockXVI" detailText:@"1.0" icon:[UIImage imageWithContentsOfFile:@"/Library/PreferenceBundles/floatingdockxviprefs.bundle/changelogControllerIcon.png"]];
+    self.changelogController = [[OBWelcomeController alloc] initWithTitle:@"FloatingDockXVI" detailText:@"1.1" icon:[UIImage imageWithContentsOfFile:@"/Library/PreferenceBundles/floatingdockxviprefs.bundle/changelogControllerIcon.png"]];
+    
+    [self.changelogController addBulletedListItemWithTitle:@"Dock Apps" description:@"Added the ability to change max number of Dock Apps." image:[UIImage systemImageNamed:@"1.circle.fill"]];
 
-    [self.changelogController addBulletedListItemWithTitle:@"Initial Tweak" description:@"Enjoy." image:[UIImage systemImageNamed:@"1.circle.fill"]];
+    [self.changelogController addBulletedListItemWithTitle:@"Recent Apps" description:@"Added the ability to change max number of Recent Apps." image:[UIImage systemImageNamed:@"2.circle.fill"]];
+    
+    [self.changelogController addBulletedListItemWithTitle:@"Separator" description:@"Added an option to remove the separator in the dock when recent apps are enabled." image:[UIImage systemImageNamed:@"3.circle.fill"]];
+    
+    [self.changelogController addBulletedListItemWithTitle:@"Disable" description:@"Added an option to disable floating dock in apps." image:[UIImage systemImageNamed:@"4.circle.fill"]];
+    
+    [self.changelogController addBulletedListItemWithTitle:@"Bugs" description:@"Fixed a bug where the dock would jump around when transitioning from landscape." image:[UIImage systemImageNamed:@"5.circle.fill"]];
 
     _UIBackdropViewSettings *settings = [_UIBackdropViewSettings settingsForStyle:2];
 

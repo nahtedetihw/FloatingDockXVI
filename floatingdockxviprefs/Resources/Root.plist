@@ -36,6 +36,18 @@
 		</dict>
 		<dict>
 			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.nahtedetihw.floatingdockxviprefs</string>
+			<key>key</key>
+			<string>removeSeparator</string>
+			<key>label</key>
+			<string>Hide Dock Separator</string>
+		</dict>
+		<dict>
+			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string></string>
@@ -71,10 +83,80 @@
 		<dict>
 			<key>cell</key>
 			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Number of Dock Apps</string>
+		</dict>
+		<dict>
+			<key>cellClass</key>
+			<string>HBStepperTableCell</string>
+			<key>default</key>
+			<string>4</string>
+			<key>defaults</key>
+			<string>com.nahtedetihw.floatingdockxviprefs</string>
+			<key>key</key>
+			<string>maxDockIcons</string>
+			<key>label</key>
+			<string>%i Dock Apps</string>
+			<key>max</key>
+			<integer>10</integer>
+			<key>min</key>
+			<integer>1</integer>
+			<key>singularLabel</key>
+			<string>1 Dock App</string>
+			<key>PostNotification</key>
+			<string>com.nahtedetihw.floatingdockxviprefs/ReloadPrefs</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Number of Recent Apps</string>
+		</dict>
+		<dict>
+			<key>cellClass</key>
+			<string>HBStepperTableCell</string>
+			<key>default</key>
+			<string>3</string>
+			<key>defaults</key>
+			<string>com.nahtedetihw.floatingdockxviprefs</string>
+			<key>key</key>
+			<string>maxRecents</string>
+			<key>label</key>
+			<string>%i Recent Apps</string>
+			<key>max</key>
+			<integer>10</integer>
+			<key>min</key>
+			<integer>1</integer>
+			<key>singularLabel</key>
+			<string>1 Recent App</string>
+			<key>PostNotification</key>
+			<string>com.nahtedetihw.floatingdockxviprefs/ReloadPrefs</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string></string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.nahtedetihw.floatingdockxviprefs</string>
+			<key>key</key>
+			<string>disableFloatingDockInApps</string>
+			<key>label</key>
+			<string>Disable Dock In Apps</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
 			<key>footerAlignment</key>
 			<string>1</string>
 			<key>footerText</key>
-			<string>FloatingDockXVI 1.0</string>
+			<string>FloatingDockXVI 1.1</string>
 		</dict>
 		<dict>
 			<key>cell</key>
