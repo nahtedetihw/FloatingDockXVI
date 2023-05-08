@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
-#import <Cephei/HBPreferences.h>
+
+#define plistPath ([[NSFileManager defaultManager] fileExistsAtPath:@"/var/mobile/Library/Preferences/com.nahtedetihw.floatingdockxviprefs.plist"] ? @"/var/mobile/Library/Preferences/com.nahtedetihw.floatingdockxviprefs.plist" : @"/var/jb/var/mobile/Library/Preferences/com.nahtedetihw.floatingdockxviprefs.plist")
 
 @interface SBFloatingDockPlatterView : UIView
 @property (nonatomic) UIView *backgroundView;
@@ -14,9 +15,44 @@
 @property (nonatomic) NSString *iconLocation;
 @end
 
-HBPreferences *preferences;
+@interface SBMainSwitcherControllerCoordinator : UIViewController
++ (id)sharedInstance;
+- (bool)isMainSwitcherVisible;
+@end
+
+@interface SBMainSwitcherViewController : UIViewController
++ (id)sharedInstance;
+- (bool)isMainSwitcherVisible;
+@end
+
+@interface SBFloatingDockController : NSObject
+-(BOOL)_canPresentFloatingDock;
+-(void)dismissFloatingDockIfPresentedAnimated:(BOOL)arg1 completionHandler:(/*^block*/id)arg2;
+-(void)_dismissFloatingDockIfPresentedAnimated:(BOOL)arg1 completionHandler:(/*^block*/id)arg2;
+@end
+
+@interface SBIconController : UIViewController
++ (id)sharedInstance;
+@property (nonatomic, readonly) SBFloatingDockController *floatingDockController;
+@end
+
+static NSString *preferencesNotification = @"com.nahtedetihw.floatingdockxviprefs/ReloadPrefs";
+
 BOOL enabled, hideDockBG, disableFloatingDockInApps, removeSeparator;
 NSInteger dockStyle, maxRecents, maxDockIcons;
+
+static void loadPreferences() {
+    NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:plistPath];
+    
+    enabled = dict[@"enabled"] ? [dict[@"enabled"] boolValue] : NO;
+    hideDockBG = dict[@"hideDockBG"] ? [dict[@"hideDockBG"] boolValue] : NO;
+    removeSeparator = dict[@"removeSeparator"] ? [dict[@"removeSeparator"] boolValue] : NO;
+    disableFloatingDockInApps = dict[@"disableFloatingDockInApps"] ? [dict[@"disableFloatingDockInApps"] boolValue] : NO;
+    
+    dockStyle = dict[@"dockStyle"] ? [dict[@"dockStyle"] integerValue] : 0;
+    maxRecents = dict[@"maxRecents"] ? [dict[@"maxRecents"] integerValue] : 3;
+    maxDockIcons = dict[@"maxDockIcons"] ? [dict[@"maxDockIcons"] integerValue] : 4;
+}
 
 %group FloatingDockXVI
 %hook SBFloatingDockController
@@ -103,18 +139,24 @@ NSInteger dockStyle, maxRecents, maxDockIcons;
 - (BOOL)isFloatingDockGesturePossible {
     return !disableFloatingDockInApps;
 }
+- (BOOL)isFloatingDockSupported {
+    if ([[%c(SBMainSwitcherViewController) sharedInstance] isMainSwitcherVisible]) return disableFloatingDockInApps;
+    if ([[%c(SBMainSwitcherControllerCoordinator) sharedInstance] isMainSwitcherVisible]) return disableFloatingDockInApps;
+    return !disableFloatingDockInApps;
+}
+%end
+
+%hook SpringBoard
+- (void)applicationDidFinishLaunching:(UIApplication *)application {
+    %orig;
+    loadPreferences();
+}
 %end
 %end
 
 %ctor {
-    preferences = [[HBPreferences alloc] initWithIdentifier:@"com.nahtedetihw.floatingdockxviprefs"];
-    [preferences registerBool:&enabled default:NO forKey:@"enabled"];
-    [preferences registerBool:&hideDockBG default:NO forKey:@"hideDockBG"];
-    [preferences registerBool:&removeSeparator default:NO forKey:@"removeSeparator"];
-    [preferences registerInteger:&dockStyle default:0 forKey:@"dockStyle"];
-    [preferences registerBool:&disableFloatingDockInApps default:NO forKey:@"disableFloatingDockInApps"];
-    [preferences registerInteger:&maxRecents default:3 forKey:@"maxRecents"];
-    [preferences registerInteger:&maxDockIcons default:4 forKey:@"maxDockIcons"];
+    loadPreferences(); // Load prefs
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)loadPreferences, (CFStringRef)preferencesNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
     
     if (enabled) %init(FloatingDockXVI);
     %init;

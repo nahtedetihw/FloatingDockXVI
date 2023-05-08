@@ -87,22 +87,22 @@
 			<string>Number of Dock Apps</string>
 		</dict>
 		<dict>
-			<key>cellClass</key>
-			<string>HBStepperTableCell</string>
+			<key>cell</key>
+			<string>PSSliderCell</string>
 			<key>default</key>
-			<string>4</string>
+			<integer>4</integer>
 			<key>defaults</key>
 			<string>com.nahtedetihw.floatingdockxviprefs</string>
 			<key>key</key>
 			<string>maxDockIcons</string>
-			<key>label</key>
-			<string>%i Dock Apps</string>
 			<key>max</key>
 			<integer>10</integer>
 			<key>min</key>
 			<integer>1</integer>
-			<key>singularLabel</key>
-			<string>1 Dock App</string>
+			<key>isSegmented</key>
+			<true/>
+			<key>showValue</key>
+			<true/>
 			<key>PostNotification</key>
 			<string>com.nahtedetihw.floatingdockxviprefs/ReloadPrefs</string>
 		</dict>
@@ -113,22 +113,22 @@
 			<string>Number of Recent Apps</string>
 		</dict>
 		<dict>
-			<key>cellClass</key>
-			<string>HBStepperTableCell</string>
+			<key>cell</key>
+			<string>PSSliderCell</string>
 			<key>default</key>
-			<string>3</string>
+			<integer>3</integer>
 			<key>defaults</key>
 			<string>com.nahtedetihw.floatingdockxviprefs</string>
 			<key>key</key>
 			<string>maxRecents</string>
-			<key>label</key>
-			<string>%i Recent Apps</string>
 			<key>max</key>
 			<integer>10</integer>
 			<key>min</key>
 			<integer>1</integer>
-			<key>singularLabel</key>
-			<string>1 Recent App</string>
+			<key>isSegmented</key>
+			<true/>
+			<key>showValue</key>
+			<true/>
 			<key>PostNotification</key>
 			<string>com.nahtedetihw.floatingdockxviprefs/ReloadPrefs</string>
 		</dict>
@@ -156,7 +156,7 @@
 			<key>footerAlignment</key>
 			<string>1</string>
 			<key>footerText</key>
-			<string>FloatingDockXVI 1.1</string>
+			<string>FloatingDockXVI 1.3</string>
 		</dict>
 		<dict>
 			<key>cell</key>
@@ -164,7 +164,7 @@
 			<key>footerAlignment</key>
 			<string>1</string>
 			<key>footerText</key>
-			<string>2022 © ETHN</string>
+			<string>2023 © ETHN</string>
 		</dict>
 	</array>
 	<key>title</key>

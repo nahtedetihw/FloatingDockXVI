@@ -9,7 +9,7 @@
 		<key>cell</key>
 		<string>PSLinkCell</string>
 		<key>detail</key>
-		<string>FDXVIPreferencesListController</string>
+		<string>FDXVIRootListController</string>
 		<key>icon</key>
 		<string>icon.png</string>
 		<key>isController</key>
