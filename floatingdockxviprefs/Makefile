@@ -2,9 +2,9 @@ TARGET := iphone:clang:latest:13.0
 
 include $(THEOS)/makefiles/common.mk
 
-SYSROOT=$(THEOS)/sdks/iphoneos14.2.sdk
+SYSROOT=$(THEOS)/sdks/iphoneos14.5.sdk
 
-## THEOS_PACKAGE_SCHEME=rootless
+##THEOS_PACKAGE_SCHEME=rootless
 
 BUNDLE_NAME = floatingdockxviprefs
 

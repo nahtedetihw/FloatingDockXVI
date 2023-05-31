@@ -2,6 +2,9 @@
 
 #define plistPath ([[NSFileManager defaultManager] fileExistsAtPath:@"/var/mobile/Library/Preferences/com.nahtedetihw.floatingdockxviprefs.plist"] ? @"/var/mobile/Library/Preferences/com.nahtedetihw.floatingdockxviprefs.plist" : @"/var/jb/var/mobile/Library/Preferences/com.nahtedetihw.floatingdockxviprefs.plist")
 
+#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+#define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
+
 @interface SBFloatingDockPlatterView : UIView
 @property (nonatomic) UIView *backgroundView;
 @end
@@ -17,7 +20,7 @@
 
 @interface SBMainSwitcherControllerCoordinator : UIViewController
 + (id)sharedInstance;
-- (bool)isMainSwitcherVisible;
+- (bool)isAnySwitcherVisible;
 @end
 
 @interface SBMainSwitcherViewController : UIViewController
@@ -124,24 +127,16 @@ static void loadPreferences() {
 }
 %end
 
-%hook SBFloatingDockSuggestionsModel
-// iOS 16 method to restrict max recents in dock
-- (id)initWithMaximumNumberOfSuggestions:(NSUInteger)arg1 iconController:(id)arg2 recentsController:(id)arg3 recentsDataStore:(id)arg4 recentsDefaults:(id)arg5 floatingDockDefaults:(id)arg6 appSuggestionManager:(id)arg7 applicationController:(id)arg8 {
-    return %orig(maxRecents,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
-}
-// iOS 15 method to restrict max recents in dock
--(id)initWithMaximumNumberOfSuggestions:(unsigned long long)arg1 iconController:(id)arg2 recentsController:(id)arg3 recentsDataStore:(id)arg4 recentsDefaults:(id)arg5 floatingDockDefaults:(id)arg6 appSuggestionManager:(id)arg7 analyticsClient:(id)arg8 applicationController:(id)arg9 {
-    return %orig(maxRecents,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
-}
-%end
-
 %hook SBFluidSwitcherViewController
 - (BOOL)isFloatingDockGesturePossible {
     return !disableFloatingDockInApps;
 }
 - (BOOL)isFloatingDockSupported {
-    if ([[%c(SBMainSwitcherViewController) sharedInstance] isMainSwitcherVisible]) return disableFloatingDockInApps;
-    if ([[%c(SBMainSwitcherControllerCoordinator) sharedInstance] isMainSwitcherVisible]) return disableFloatingDockInApps;
+    if (@available(iOS 16.0, *)) {
+        if ([[%c(SBMainSwitcherControllerCoordinator) sharedInstance] isAnySwitcherVisible]) return disableFloatingDockInApps;
+    } else {
+        if ([[%c(SBMainSwitcherViewController) sharedInstance] isMainSwitcherVisible]) return disableFloatingDockInApps;
+    }
     return !disableFloatingDockInApps;
 }
 %end
@@ -154,10 +149,42 @@ static void loadPreferences() {
 %end
 %end
 
+%group Recents16
+%hook SBRecentDisplayItemsController
+-(id)initWithRemovalPersonality:(long long)arg1 movePersonality:(long long)arg2 transitionFromSources:(id)arg3 maxDisplayItems:(unsigned long long)arg4 eventSource:(id)arg5 applicationController:(id)arg6 {
+    return %orig(arg1,arg2,arg3,maxRecents,arg5,arg6);
+}
+%end
+
+%hook SBFloatingDockSuggestionsModel
+// iOS 16 method to restrict max recents in dock
+- (id)initWithMaximumNumberOfSuggestions:(NSUInteger)arg1 iconController:(id)arg2 recentsController:(id)arg3 recentsDataStore:(id)arg4 recentsDefaults:(id)arg5 floatingDockDefaults:(id)arg6 appSuggestionManager:(id)arg7 applicationController:(id)arg8 {
+    return %orig(maxRecents,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
+}
+%end
+%end
+
+%group Recents15
+%hook SBRecentDisplayItemsController
+-(id)initWithRemovalPersonality:(long long)arg1 movePersonality:(long long)arg2 transitionFromSources:(id)arg3 maxDisplayItems:(unsigned long long)arg4 eventSource:(id)arg5 applicationController:(id)arg6 {
+    return %orig(arg1,arg2,arg3,maxRecents,arg5,arg6);
+}
+%end
+
+%hook SBFloatingDockSuggestionsModel
+// iOS 15 method to restrict max recents in dock
+-(id)initWithMaximumNumberOfSuggestions:(unsigned long long)arg1 iconController:(id)arg2 recentsController:(id)arg3 recentsDataStore:(id)arg4 recentsDefaults:(id)arg5 floatingDockDefaults:(id)arg6 appSuggestionManager:(id)arg7 analyticsClient:(id)arg8 applicationController:(id)arg9 {
+    return %orig(maxRecents,arg2,arg3,arg4,arg5,arg6,arg7,arg8, arg9);
+}
+%end
+%end
+
 %ctor {
     loadPreferences(); // Load prefs
     CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)loadPreferences, (CFStringRef)preferencesNotification, NULL, CFNotificationSuspensionBehaviorCoalesce);
     
     if (enabled) %init(FloatingDockXVI);
+    if (enabled && SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"16.0")) %init(Recents16);
+    if (enabled && SYSTEM_VERSION_LESS_THAN(@"16.0")) %init(Recents15);
     %init;
 }
