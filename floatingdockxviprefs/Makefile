@@ -4,7 +4,7 @@ include $(THEOS)/makefiles/common.mk
 
 SYSROOT=$(THEOS)/sdks/iphoneos14.5.sdk
 
-##THEOS_PACKAGE_SCHEME=rootless
+## THEOS_PACKAGE_SCHEME=rootless
 
 BUNDLE_NAME = floatingdockxviprefs
 

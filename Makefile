@@ -4,7 +4,7 @@ ARCHS = arm64 arm64e
 SYSROOT = $(THEOS)/sdks/iPhoneOS14.5.sdk
 DEBUG = 0
 FINALPACKAGE = 1
-##THEOS_PACKAGE_SCHEME=rootless
+## THEOS_PACKAGE_SCHEME=rootless
 
 include $(THEOS)/makefiles/common.mk
 

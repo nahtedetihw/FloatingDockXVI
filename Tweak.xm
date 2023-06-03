@@ -39,6 +39,14 @@
 @property (nonatomic, readonly) SBFloatingDockController *floatingDockController;
 @end
 
+@interface SBBestAppSuggestion : NSObject
+- (BOOL)isHandoff;
+@end
+
+@interface SBFloatingDockSuggestionsModel : NSObject
+@property (nonatomic,readonly) SBBestAppSuggestion * currentAppSuggestion;
+@end
+
 static NSString *preferencesNotification = @"com.nahtedetihw.floatingdockxviprefs/ReloadPrefs";
 
 BOOL enabled, hideDockBG, disableFloatingDockInApps, removeSeparator;
@@ -150,13 +158,12 @@ static void loadPreferences() {
 %end
 
 %group Recents16
-%hook SBRecentDisplayItemsController
--(id)initWithRemovalPersonality:(long long)arg1 movePersonality:(long long)arg2 transitionFromSources:(id)arg3 maxDisplayItems:(unsigned long long)arg4 eventSource:(id)arg5 applicationController:(id)arg6 {
-    return %orig(arg1,arg2,arg3,maxRecents,arg5,arg6);
-}
-%end
-
 %hook SBFloatingDockSuggestionsModel
+-(BOOL)recentDisplayItemsController:(id)arg1 shouldAddItem:(id)arg2 {
+    if ([self.currentAppSuggestion isHandoff]) return NO;
+    return %orig;
+}
+
 // iOS 16 method to restrict max recents in dock
 - (id)initWithMaximumNumberOfSuggestions:(NSUInteger)arg1 iconController:(id)arg2 recentsController:(id)arg3 recentsDataStore:(id)arg4 recentsDefaults:(id)arg5 floatingDockDefaults:(id)arg6 appSuggestionManager:(id)arg7 applicationController:(id)arg8 {
     return %orig(maxRecents,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
@@ -165,16 +172,15 @@ static void loadPreferences() {
 %end
 
 %group Recents15
-%hook SBRecentDisplayItemsController
--(id)initWithRemovalPersonality:(long long)arg1 movePersonality:(long long)arg2 transitionFromSources:(id)arg3 maxDisplayItems:(unsigned long long)arg4 eventSource:(id)arg5 applicationController:(id)arg6 {
-    return %orig(arg1,arg2,arg3,maxRecents,arg5,arg6);
-}
-%end
-
 %hook SBFloatingDockSuggestionsModel
+-(BOOL)recentDisplayItemsController:(id)arg1 shouldAddItem:(id)arg2 {
+    if ([self.currentAppSuggestion isHandoff]) return NO;
+    return %orig;
+}
+
 // iOS 15 method to restrict max recents in dock
 -(id)initWithMaximumNumberOfSuggestions:(unsigned long long)arg1 iconController:(id)arg2 recentsController:(id)arg3 recentsDataStore:(id)arg4 recentsDefaults:(id)arg5 floatingDockDefaults:(id)arg6 appSuggestionManager:(id)arg7 analyticsClient:(id)arg8 applicationController:(id)arg9 {
-    return %orig(maxRecents,arg2,arg3,arg4,arg5,arg6,arg7,arg8, arg9);
+    return %orig(maxRecents,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
 }
 %end
 %end
