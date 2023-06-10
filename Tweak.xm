@@ -26,17 +26,28 @@
 @interface SBMainSwitcherViewController : UIViewController
 + (id)sharedInstance;
 - (bool)isMainSwitcherVisible;
+- (bool)isAnySwitcherVisible;
+- (bool)isSlideOverSwitcherVisible;
 @end
 
 @interface SBFloatingDockController : NSObject
 -(BOOL)_canPresentFloatingDock;
--(void)dismissFloatingDockIfPresentedAnimated:(BOOL)arg1 completionHandler:(/*^block*/id)arg2;
 -(void)_dismissFloatingDockIfPresentedAnimated:(BOOL)arg1 completionHandler:(/*^block*/id)arg2;
+-(void)_presentFloatingDockIfDismissedAnimated:(BOOL)arg1 completionHandler:(/*^block*/id)arg2;
+@end
+
+@interface SBFloatingDockBehaviorAssertion : NSObject
+@property (nonatomic, readonly) SBFloatingDockController *floatingDockController;
+@end
+
+@interface SBHomeScreenViewController : UIViewController
+@property (nonatomic) SBFloatingDockBehaviorAssertion *homeScreenFloatingDockAssertion;
 @end
 
 @interface SBIconController : UIViewController
 + (id)sharedInstance;
 @property (nonatomic, readonly) SBFloatingDockController *floatingDockController;
+@property (nonatomic) SBHomeScreenViewController *parentViewController;
 @end
 
 @interface SBBestAppSuggestion : NSObject
@@ -47,9 +58,25 @@
 @property (nonatomic,readonly) SBBestAppSuggestion * currentAppSuggestion;
 @end
 
+static void toggleDockVisibility() {
+    if (@available(iOS 16.0, *)) {
+        if ([[%c(SBMainSwitcherControllerCoordinator) sharedInstance] isAnySwitcherVisible]) {
+            [[[((SBHomeScreenViewController *)[[%c(SBIconController) sharedInstance] parentViewController]) homeScreenFloatingDockAssertion] floatingDockController] _dismissFloatingDockIfPresentedAnimated:YES completionHandler:nil];
+        } else {
+            [[[((SBHomeScreenViewController *)[[%c(SBIconController) sharedInstance] parentViewController]) homeScreenFloatingDockAssertion] floatingDockController] _presentFloatingDockIfDismissedAnimated:YES completionHandler:nil];
+        }
+    } else {
+        if ([[%c(SBMainSwitcherViewController) sharedInstance] isAnySwitcherVisible] || [[%c(SBMainSwitcherViewController) sharedInstance] isMainSwitcherVisible] || [[%c(SBMainSwitcherViewController) sharedInstance] isSlideOverSwitcherVisible]) {
+            [[[%c(SBIconController) sharedInstance] floatingDockController] _dismissFloatingDockIfPresentedAnimated:YES completionHandler:nil];
+        } else {
+            [[[%c(SBIconController) sharedInstance] floatingDockController] _presentFloatingDockIfDismissedAnimated:YES completionHandler:nil];
+        }
+    }
+}
+
 static NSString *preferencesNotification = @"com.nahtedetihw.floatingdockxviprefs/ReloadPrefs";
 
-BOOL enabled, hideDockBG, disableFloatingDockInApps, removeSeparator;
+BOOL enabled, hideDockBG, disableFloatingDockInApps, disableFloatingDockInSwitcher, removeSeparator;
 NSInteger dockStyle, maxRecents, maxDockIcons;
 
 static void loadPreferences() {
@@ -59,6 +86,7 @@ static void loadPreferences() {
     hideDockBG = dict[@"hideDockBG"] ? [dict[@"hideDockBG"] boolValue] : NO;
     removeSeparator = dict[@"removeSeparator"] ? [dict[@"removeSeparator"] boolValue] : NO;
     disableFloatingDockInApps = dict[@"disableFloatingDockInApps"] ? [dict[@"disableFloatingDockInApps"] boolValue] : NO;
+    disableFloatingDockInSwitcher = dict[@"disableFloatingDockInSwitcher"] ? [dict[@"disableFloatingDockInSwitcher"] boolValue] : NO;
     
     dockStyle = dict[@"dockStyle"] ? [dict[@"dockStyle"] integerValue] : 0;
     maxRecents = dict[@"maxRecents"] ? [dict[@"maxRecents"] integerValue] : 3;
@@ -146,6 +174,27 @@ static void loadPreferences() {
         if ([[%c(SBMainSwitcherViewController) sharedInstance] isMainSwitcherVisible]) return disableFloatingDockInApps;
     }
     return !disableFloatingDockInApps;
+}
+%end
+
+%hook SBDeckSwitcherModifier
+- (bool)shouldConfigureInAppDockHiddenAssertion {
+    if (disableFloatingDockInSwitcher) return YES;
+    return %orig;
+}
+%end
+
+%hook SBMainSwitcherControllerCoordinator
+-(void)layoutStateTransitionCoordinator:(id)arg1 transitionDidBeginWithTransitionContext:(id)arg2 {
+    %orig;
+    if (disableFloatingDockInSwitcher) toggleDockVisibility();
+}
+%end
+
+%hook SBMainSwitcherViewController
+-(void)layoutStateTransitionCoordinator:(id)arg1 transitionDidBeginWithTransitionContext:(id)arg2 {
+    %orig;
+    if (disableFloatingDockInSwitcher) toggleDockVisibility();
 }
 %end
 

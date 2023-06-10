@@ -212,6 +212,7 @@ UIViewController *popController;
     [settings setObject:value forKey:specifier.properties [@"key"]];
     [settings writeToFile:plistPath atomically:YES];
     [super setPreferenceValue:value specifier :specifier];
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), (CFStringRef)[specifier.properties objectForKey:@"PostNotification"], NULL, NULL, YES);
 }
 
 - (void)apply:(UIButton *)sender {

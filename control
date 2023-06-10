@@ -1,9 +1,9 @@
 Package: com.nahtedetihw.floatingdockxvi
 Name: FloatingDockXVI
-Version: 1.6.1
+Version: 1.8
 Architecture: iphoneos-arm
 Description: Floating Dock on iOS 16
 Maintainer: Ethan Whited
 Author: Ethan Whited
 Section: Tweaks
-Depends: mobilesubstrate, preferenceloader
+Depends: preferenceloader
