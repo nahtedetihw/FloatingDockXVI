@@ -24,3 +24,8 @@
 - (void)handleYesGesture;
 - (void)handleNoGesture:(UIButton *)sender;
 @end
+
+@interface PSListController (Private)
+- (void)_unloadBundleControllers;
+- (id)bundle;
+@end

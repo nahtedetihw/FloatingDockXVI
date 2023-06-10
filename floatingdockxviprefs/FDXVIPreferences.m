@@ -8,6 +8,8 @@ static NSString *preferencesNotification = @"com.nahtedetihw.floatingdockxvipref
 
 #define plistPath ([[NSFileManager defaultManager] fileExistsAtPath:@"/var/mobile/Library/Preferences/com.nahtedetihw.floatingdockxviprefs.plist"] ? @"/var/mobile/Library/Preferences/com.nahtedetihw.floatingdockxviprefs.plist" : @"/var/jb/var/mobile/Library/Preferences/com.nahtedetihw.floatingdockxviprefs.plist")
 
+#define SettingsColor [UIColor colorWithRed:119/255.0f green:181/255.0f blue:166/255.0f alpha:1.0f]
+
 UIBarButtonItem *respringButtonItem;
 UIBarButtonItem *twitterButtonItem;
 UIBarButtonItem *paypalButtonItem;
@@ -39,7 +41,7 @@ UIViewController *popController;
         respringButton.frame = CGRectMake(0,0,30,30);
         respringButton.layer.cornerRadius = respringButton.frame.size.height / 2;
         respringButton.layer.masksToBounds = YES;
-        respringButton.backgroundColor = [UIColor colorWithRed:119/255.0f green:181/255.0f blue:166/255.0f alpha:1.0f];
+        respringButton.backgroundColor = SettingsColor;
         [respringButton setImage:[[UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@CHECKMARK.png", bundlePath]] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
         [respringButton addTarget:self action:@selector(apply:) forControlEvents:UIControlEventTouchUpInside];
         respringButton.tintColor = [UIColor colorWithRed:15/255.0f green:130/255.0f blue:193/255.0f alpha:1.0f];
@@ -50,7 +52,7 @@ UIViewController *popController;
         twitterButton.frame = CGRectMake(0,0,30,30);
         twitterButton.layer.cornerRadius = twitterButton.frame.size.height / 2;
         twitterButton.layer.masksToBounds = YES;
-        twitterButton.backgroundColor = [UIColor colorWithRed:119/255.0f green:181/255.0f blue:166/255.0f alpha:1.0f];
+        twitterButton.backgroundColor = SettingsColor;
         [twitterButton setImage:[[UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@TWITTER.png", bundlePath]] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
         [twitterButton addTarget:self action:@selector(twitter:) forControlEvents:UIControlEventTouchUpInside];
         twitterButton.tintColor = [UIColor colorWithRed:15/255.0f green:130/255.0f blue:193/255.0f alpha:1.0f];
@@ -61,7 +63,7 @@ UIViewController *popController;
         paypalButton.frame = CGRectMake(0,0,30,30);
         paypalButton.layer.cornerRadius = paypalButton.frame.size.height / 2;
         paypalButton.layer.masksToBounds = YES;
-        paypalButton.backgroundColor = [UIColor colorWithRed:119/255.0f green:181/255.0f blue:166/255.0f alpha:1.0f];
+        paypalButton.backgroundColor = SettingsColor;
         [paypalButton setImage:[[UIImage imageWithContentsOfFile:[NSString stringWithFormat:@"%@PAYPAL.png", bundlePath]] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
         [paypalButton addTarget:self action:@selector(paypal:) forControlEvents:UIControlEventTouchUpInside];
         paypalButton.tintColor = [UIColor colorWithRed:15/255.0f green:130/255.0f blue:193/255.0f alpha:1.0f];
@@ -76,7 +78,7 @@ UIViewController *popController;
         self.titleLabel.font = [UIFont boldSystemFontOfSize:18];
         self.titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
         self.titleLabel.text = @"";
-        self.titleLabel.textColor = [UIColor colorWithRed:119/255.0f green:181/255.0f blue:166/255.0f alpha:1.0f];
+        self.titleLabel.textColor = SettingsColor;
         self.titleLabel.textAlignment = NSTextAlignmentCenter;
         [self.navigationItem.titleView addSubview:self.titleLabel];
 
@@ -116,7 +118,13 @@ UIViewController *popController;
     CGRect frame = self.table.bounds;
     frame.origin.y = -frame.size.height;
 
-    self.navigationController.navigationController.navigationBar.tintColor = [UIColor colorWithRed:119/255.0f green:181/255.0f blue:166/255.0f alpha:1.0f];
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    if (window == nil) {
+        window = [[UIApplication sharedApplication].windows firstObject];
+    }
+    if ([window respondsToSelector:@selector(tintColor)]) {
+        window.tintColor = SettingsColor;
+    }
     self.navigationController.navigationController.navigationBar.translucent = YES;
 }
 
@@ -170,19 +178,35 @@ UIViewController *popController;
     self.headerImageView.frame = CGRectMake(self.headerView.frame.origin.x, self.headerView.frame.origin.y, self.headerView.frame.size.width, 200 - offsetY);
 }
 
+- (void)_unloadBundleControllers {
+    [super _unloadBundleControllers];
+
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    if ([window respondsToSelector:@selector(tintColor)]) {
+        window.tintColor = nil;
+    }
+}
+
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
 
-    [self.navigationController.navigationController.navigationBar setTitleTextAttributes:@{NSForegroundColorAttributeName : [UIColor blackColor]}];
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    if (window == nil)
+        window = [[UIApplication sharedApplication].windows firstObject];
+
+    if (!bundlePath) {
+        if ([window respondsToSelector:@selector(tintColor)])
+            window.tintColor = nil;
+    }
 }
 
--(id)readPreferenceValue: (PSSpecifier *)specifier {
+- (id)readPreferenceValue: (PSSpecifier *)specifier {
     NSMutableDictionary *settings = [NSMutableDictionary dictionary];
     [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:plistPath]];
     return settings [specifier.properties[@"key"]] ?: specifier.properties[@"default"];
 }
 
--(void)setPreferenceValue:(id)value specifier: (PSSpecifier *)specifier {
+- (void)setPreferenceValue:(id)value specifier: (PSSpecifier *)specifier {
     NSMutableDictionary *settings = [NSMutableDictionary dictionary];
     [settings addEntriesFromDictionary: [NSDictionary dictionaryWithContentsOfFile: plistPath]];
     [settings setObject:value forKey:specifier.properties [@"key"]];
@@ -230,7 +254,7 @@ UIViewController *popController;
     //[popover _setBackgroundBlurDisabled:YES];
     popover.permittedArrowDirections = UIPopoverArrowDirectionUp;
     popover.barButtonItem = respringButtonItem;
-    popover.backgroundColor = [UIColor colorWithRed:119/255.0f green:181/255.0f blue:166/255.0f alpha:1.0f];
+    popover.backgroundColor = SettingsColor;
     
     [self presentViewController:popController animated:YES completion:nil];
     
