@@ -56,17 +56,22 @@
 
 @interface SBFloatingDockSuggestionsModel : NSObject
 @property (nonatomic,readonly) SBBestAppSuggestion * currentAppSuggestion;
+-(void)_reloadRecentsAndSuggestions;
+@end
+
+@interface SpringBoard : UIApplication
+-(BOOL)isShowingHomescreen;
 @end
 
 static void toggleDockVisibility() {
     if (@available(iOS 16.0, *)) {
-        if ([[%c(SBMainSwitcherControllerCoordinator) sharedInstance] isAnySwitcherVisible]) {
+        if (![((SpringBoard *)[%c(SpringBoard) sharedApplication]) isShowingHomescreen]) {
             [[[((SBHomeScreenViewController *)[[%c(SBIconController) sharedInstance] parentViewController]) homeScreenFloatingDockAssertion] floatingDockController] _dismissFloatingDockIfPresentedAnimated:YES completionHandler:nil];
         } else {
             [[[((SBHomeScreenViewController *)[[%c(SBIconController) sharedInstance] parentViewController]) homeScreenFloatingDockAssertion] floatingDockController] _presentFloatingDockIfDismissedAnimated:YES completionHandler:nil];
         }
     } else {
-        if ([[%c(SBMainSwitcherViewController) sharedInstance] isAnySwitcherVisible] || [[%c(SBMainSwitcherViewController) sharedInstance] isMainSwitcherVisible] || [[%c(SBMainSwitcherViewController) sharedInstance] isSlideOverSwitcherVisible]) {
+        if (![((SpringBoard *)[%c(SpringBoard) sharedApplication]) isShowingHomescreen]) {
             [[[%c(SBIconController) sharedInstance] floatingDockController] _dismissFloatingDockIfPresentedAnimated:YES completionHandler:nil];
         } else {
             [[[%c(SBIconController) sharedInstance] floatingDockController] _presentFloatingDockIfDismissedAnimated:YES completionHandler:nil];
@@ -177,13 +182,6 @@ static void loadPreferences() {
 }
 %end
 
-%hook SBDeckSwitcherModifier
-- (bool)shouldConfigureInAppDockHiddenAssertion {
-    if (disableFloatingDockInSwitcher) return YES;
-    return %orig;
-}
-%end
-
 %hook SBMainSwitcherControllerCoordinator
 -(void)layoutStateTransitionCoordinator:(id)arg1 transitionDidBeginWithTransitionContext:(id)arg2 {
     %orig;
@@ -217,6 +215,16 @@ static void loadPreferences() {
 - (id)initWithMaximumNumberOfSuggestions:(NSUInteger)arg1 iconController:(id)arg2 recentsController:(id)arg3 recentsDataStore:(id)arg4 recentsDefaults:(id)arg5 floatingDockDefaults:(id)arg6 appSuggestionManager:(id)arg7 applicationController:(id)arg8 {
     return %orig(maxRecents,arg2,arg3,arg4,arg5,arg6,arg7,arg8);
 }
+
+-(unsigned long long)maxSuggestions {
+    return maxRecents;
+}
+%end
+
+%hook SBFloatingDockSuggestionsViewController
+-(id)initWithNumberOfRecents:(unsigned long long)arg1 iconController:(id)arg2 applicationController:(id)arg3 layoutStateTransitionCoordinator:(id)arg4 suggestionsModel:(id)arg5 iconViewProvider:(id)arg6 {
+    return %orig(maxRecents,arg2,arg3,arg4,arg5,arg6);
+}
 %end
 %end
 
@@ -230,6 +238,16 @@ static void loadPreferences() {
 // iOS 15 method to restrict max recents in dock
 -(id)initWithMaximumNumberOfSuggestions:(unsigned long long)arg1 iconController:(id)arg2 recentsController:(id)arg3 recentsDataStore:(id)arg4 recentsDefaults:(id)arg5 floatingDockDefaults:(id)arg6 appSuggestionManager:(id)arg7 analyticsClient:(id)arg8 applicationController:(id)arg9 {
     return %orig(maxRecents,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9);
+}
+
+-(unsigned long long)maxSuggestions {
+    return maxRecents;
+}
+%end
+
+%hook SBFloatingDockSuggestionsViewController
+-(id)initWithNumberOfRecents:(unsigned long long)arg1 iconController:(id)arg2 applicationController:(id)arg3 layoutStateTransitionCoordinator:(id)arg4 suggestionsModel:(id)arg5 iconViewProvider:(id)arg6 {
+    return %orig(maxRecents,arg2,arg3,arg4,arg5,arg6);
 }
 %end
 %end
