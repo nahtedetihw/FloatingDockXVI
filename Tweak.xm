@@ -5,6 +5,10 @@
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
 #define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
 
+@interface SBFloatingDockViewController : UIViewController
+@property (getter=isPresentingFolder,nonatomic,readonly) BOOL presentingFolder; 
+@end
+
 @interface SBFloatingDockPlatterView : UIView
 @property (nonatomic) UIView *backgroundView;
 @end
@@ -37,7 +41,9 @@
 @end
 
 @interface SBFloatingDockBehaviorAssertion : NSObject
+@property (nonatomic,readonly) unsigned long long level;
 @property (nonatomic, readonly) SBFloatingDockController *floatingDockController;
+-(id)initWithFloatingDockController:(SBFloatingDockController *)arg1 visibleProgress:(double)arg2 animated:(BOOL)arg3 gesturePossible:(BOOL)arg4 atLevel:(unsigned long long)arg5 reason:(id)arg6 withCompletion:(/*^block*/id)arg7;
 @end
 
 @interface SBHomeScreenViewController : UIViewController
@@ -63,26 +69,26 @@
 -(BOOL)isShowingHomescreen;
 @end
 
-static void toggleDockVisibility() {
+static void showDock() {
     if (@available(iOS 16.0, *)) {
-        if (![((SpringBoard *)[%c(SpringBoard) sharedApplication]) isShowingHomescreen]) {
-            [[[((SBHomeScreenViewController *)[[%c(SBIconController) sharedInstance] parentViewController]) homeScreenFloatingDockAssertion] floatingDockController] _dismissFloatingDockIfPresentedAnimated:YES completionHandler:nil];
-        } else {
-            [[[((SBHomeScreenViewController *)[[%c(SBIconController) sharedInstance] parentViewController]) homeScreenFloatingDockAssertion] floatingDockController] _presentFloatingDockIfDismissedAnimated:YES completionHandler:nil];
-        }
+        [[[((SBHomeScreenViewController *)[[%c(SBIconController) sharedInstance] parentViewController]) homeScreenFloatingDockAssertion] floatingDockController] _presentFloatingDockIfDismissedAnimated:YES completionHandler:nil];
     } else {
-        if (![((SpringBoard *)[%c(SpringBoard) sharedApplication]) isShowingHomescreen]) {
-            [[[%c(SBIconController) sharedInstance] floatingDockController] _dismissFloatingDockIfPresentedAnimated:YES completionHandler:nil];
-        } else {
-            [[[%c(SBIconController) sharedInstance] floatingDockController] _presentFloatingDockIfDismissedAnimated:YES completionHandler:nil];
-        }
+        [[[%c(SBIconController) sharedInstance] floatingDockController] _presentFloatingDockIfDismissedAnimated:YES completionHandler:nil];
+    }
+}
+
+static void hideDock() {
+    if (@available(iOS 16.0, *)) {
+        if (![((SpringBoard *)[%c(SpringBoard) sharedApplication]) isShowingHomescreen]) [[[((SBHomeScreenViewController *)[[%c(SBIconController) sharedInstance] parentViewController]) homeScreenFloatingDockAssertion] floatingDockController] _dismissFloatingDockIfPresentedAnimated:YES completionHandler:nil];
+    } else {
+        if (![((SpringBoard *)[%c(SpringBoard) sharedApplication]) isShowingHomescreen]) [[[%c(SBIconController) sharedInstance] floatingDockController] _dismissFloatingDockIfPresentedAnimated:YES completionHandler:nil];
     }
 }
 
 static NSString *preferencesNotification = @"com.nahtedetihw.floatingdockxviprefs/ReloadPrefs";
 
-BOOL enabled, hideDockBG, disableFloatingDockInApps, disableFloatingDockInSwitcher, removeSeparator;
-NSInteger dockStyle, maxRecents, maxDockIcons;
+BOOL enabled, hideDockBG, removeSeparator;
+NSInteger dockStyle, maxRecents, maxDockIcons, dockVisibility;
 
 static void loadPreferences() {
     NSDictionary *dict = [NSDictionary dictionaryWithContentsOfFile:plistPath];
@@ -90,18 +96,21 @@ static void loadPreferences() {
     enabled = dict[@"enabled"] ? [dict[@"enabled"] boolValue] : NO;
     hideDockBG = dict[@"hideDockBG"] ? [dict[@"hideDockBG"] boolValue] : NO;
     removeSeparator = dict[@"removeSeparator"] ? [dict[@"removeSeparator"] boolValue] : NO;
-    disableFloatingDockInApps = dict[@"disableFloatingDockInApps"] ? [dict[@"disableFloatingDockInApps"] boolValue] : NO;
-    disableFloatingDockInSwitcher = dict[@"disableFloatingDockInSwitcher"] ? [dict[@"disableFloatingDockInSwitcher"] boolValue] : NO;
     
     dockStyle = dict[@"dockStyle"] ? [dict[@"dockStyle"] integerValue] : 0;
     maxRecents = dict[@"maxRecents"] ? [dict[@"maxRecents"] integerValue] : 3;
     maxDockIcons = dict[@"maxDockIcons"] ? [dict[@"maxDockIcons"] integerValue] : 4;
+    dockVisibility = dict[@"dockVisibility"] ? [dict[@"dockVisibility"] integerValue] : 0;
 }
 
 %group FloatingDockXVI
 %hook SBFloatingDockController
 + (BOOL)isFloatingDockSupported {
     return YES;
+}
+
+- (void)_configureFloatingDockBehaviorAssertionForOpenFolder:(id)arg1 atLevel:(NSUInteger)arg2 {
+    
 }
 %end
 
@@ -170,29 +179,55 @@ static void loadPreferences() {
 
 %hook SBFluidSwitcherViewController
 - (BOOL)isFloatingDockGesturePossible {
-    return !disableFloatingDockInApps;
+    BOOL orig = %orig;
+    if (dockVisibility == 0) return NO;
+    if (dockVisibility == 1) return YES;
+    if (dockVisibility == 2) return NO;
+    if (dockVisibility == 3) return YES;
+    return orig;
 }
 - (BOOL)isFloatingDockSupported {
+    BOOL orig = %orig;
     if (@available(iOS 16.0, *)) {
-        if ([[%c(SBMainSwitcherControllerCoordinator) sharedInstance] isAnySwitcherVisible]) return disableFloatingDockInApps;
+        if ([[%c(SBMainSwitcherControllerCoordinator) sharedInstance] isAnySwitcherVisible]) {
+            if (dockVisibility == 0) return YES;
+            if (dockVisibility == 1) return NO;
+            if (dockVisibility == 2) return YES;
+            if (dockVisibility == 3) return YES;
+        }
     } else {
-        if ([[%c(SBMainSwitcherViewController) sharedInstance] isMainSwitcherVisible]) return disableFloatingDockInApps;
+        if ([[%c(SBMainSwitcherViewController) sharedInstance] isMainSwitcherVisible]) {
+            if (dockVisibility == 0) return YES;
+            if (dockVisibility == 1) return NO;
+            if (dockVisibility == 2) return YES;
+            if (dockVisibility == 3) return YES;
+        }
     }
-    return !disableFloatingDockInApps;
+    if (dockVisibility == 0) return NO;
+    if (dockVisibility == 1) return YES;
+    if (dockVisibility == 2) return NO;
+    if (dockVisibility == 3) return YES;
+    return orig;
 }
 %end
 
 %hook SBMainSwitcherControllerCoordinator
 -(void)layoutStateTransitionCoordinator:(id)arg1 transitionDidBeginWithTransitionContext:(id)arg2 {
     %orig;
-    if (disableFloatingDockInSwitcher) toggleDockVisibility();
+    if (dockVisibility == 1 || dockVisibility == 2) {
+        if ([((SpringBoard *)[%c(SpringBoard) sharedApplication]) isShowingHomescreen] && ![[%c(SBMainSwitcherControllerCoordinator) sharedInstance] isAnySwitcherVisible]) showDock();
+        if (![((SpringBoard *)[%c(SpringBoard) sharedApplication]) isShowingHomescreen] && [[%c(SBMainSwitcherControllerCoordinator) sharedInstance] isAnySwitcherVisible]) hideDock();
+    }
 }
 %end
 
 %hook SBMainSwitcherViewController
 -(void)layoutStateTransitionCoordinator:(id)arg1 transitionDidBeginWithTransitionContext:(id)arg2 {
     %orig;
-    if (disableFloatingDockInSwitcher) toggleDockVisibility();
+    if (dockVisibility == 1 || dockVisibility == 2) {
+        if ([((SpringBoard *)[%c(SpringBoard) sharedApplication]) isShowingHomescreen] && ![[%c(SBMainSwitcherViewController) sharedInstance] isMainSwitcherVisible]) showDock();
+        if (![((SpringBoard *)[%c(SpringBoard) sharedApplication]) isShowingHomescreen] && [[%c(SBMainSwitcherViewController) sharedInstance] isMainSwitcherVisible]) hideDock();
+    }
 }
 %end
 
